@@ -1,0 +1,150 @@
+<html>
+<head>
+</head>
+<body>
+	<div id="textarea"></div>
+</body>
+<script>
+var OPEN = 'O';
+var CLOSED = 'X';
+var GOAL = 'G';
+var START = 'S';
+var totalClosed = 5;
+var mapWidth = 10;
+var mapHeight = 10;
+var MAP = [];
+for(var i = 0; i < mapWidth; i++){
+	MAP[i] = [];
+	for(var j = 0; j < mapHeight; j++){
+		MAP[i][j] = OPEN;
+	}
+}
+var closedCount = 0;
+while(closedCount < totalClosed){
+	var xPos = getRandomInt(0, mapWidth);
+	var yPos = getRandomInt(0, mapHeight);
+	if(MAP[xPos][yPos] === OPEN){
+		MAP[xPos][yPos] = CLOSED;
+		closedCount++;
+	}
+}
+var goalPlaced = false;
+while(!goalPlaced){
+	var xPos = getRandomInt(0, mapWidth);
+	var yPos = getRandomInt(0, mapHeight);
+	if(MAP[xPos][yPos] === OPEN){
+		MAP[xPos][yPos] = GOAL;
+		goalPlaced = true;
+	}
+}
+var startPlaced = false;
+while(!startPlaced){
+	var xPos = getRandomInt(0, mapWidth);
+	var yPos = getRandomInt(0, mapHeight);
+	if(MAP[xPos][yPos] === OPEN){
+		MAP[xPos][yPos] = START;
+		startPlaced = true;
+	}
+}
+console.log('start', MAP);
+var MOVE_HISTORY = {};
+for(var i = 0; i < mapWidth; i++){
+	for(var j = 0; j < mapHeight; j++){
+		MOVE_HISTORY[i + "_" + j] = 0;
+	}
+}
+var numberOfMoves = 0;
+var iterationsRemaining = 3;
+var goalFound = false;
+var firstPosition = getStartCoords();
+while(!goalFound && iterationsRemaining > 0){
+	var currentPosition = getStartCoords();
+	var diff = determineDirection(currentPosition);
+	var xDiff = diff.xDiff;
+	var yDiff = diff.yDiff;
+	if(validMove(currentPosition, xDiff, yDiff)){
+		console.log('valid move', {x: currentPosition.x + xDiff, y: currentPosition.y + yDiff});
+		numberOfMoves++;
+		var destination = MAP[currentPosition.x + xDiff][currentPosition.y + yDiff];
+		MAP[currentPosition.x][currentPosition.y] = OPEN;
+		MAP[currentPosition.x + xDiff][currentPosition.y + yDiff] = START;
+		updateMoveHistory(currentPosition.x + xDiff, currentPosition.y + yDiff);
+		if(destination === GOAL){
+			goalFound = true;
+			console.log('Moves required', numberOfMoves);
+			numberOfMoves = 0;
+		}
+		if(goalFound){
+			goalFound = false;
+			MAP[currentPosition.x + xDiff][currentPosition.y + yDiff] = GOAL;
+			MAP[firstPosition.x][firstPosition.y] = START;
+			iterationsRemaining--;
+		}
+	}
+}
+function updateMoveHistory(x, y){
+	if(!MOVE_HISTORY[x + "_" + y]){
+		MOVE_HISTORY[x + "_" + y] = 1;
+	} else{
+		MOVE_HISTORY[x + "_" + y]++;
+	}
+}
+function determineDirection(currentPosition){
+	var bestDirection = findBestDirection(currentPosition);
+	switch(bestDirection){
+		case "L":
+			return {xDiff: -1, yDiff: 0};
+		case "R":
+			return {xDiff: 1, yDiff: 0};
+		case "U":
+			return {xDiff: 0, yDiff: -1};
+		case "D":
+			return {xDiff: 0, yDiff: 1};
+		default:
+			return {xDiff: getRandomInt(-1, 2), yDiff: getRandomInt(-1, 2)};
+	}
+}
+function findBestDirection(currentPosition){
+	var left = currentPosition.x-1 >= 0 && MAP[currentPosition.x-1][currentPosition.y] !== CLOSED ? MOVE_HISTORY[(currentPosition.x-1) + "_" + currentPosition.y] : 999;
+	var right = currentPosition.x+1 < mapWidth && MAP[currentPosition.x+1][currentPosition.y] !== CLOSED ? MOVE_HISTORY[(currentPosition.x+1) + "_" + currentPosition.y] : 999;
+	var up = currentPosition.y-1 >= 0 && MAP[currentPosition.x][currentPosition.y-1] !== CLOSED ? MOVE_HISTORY[currentPosition.x + "_" + (currentPosition.y-1)] : 999;
+	var down = currentPosition.y+1 < mapHeight && MAP[currentPosition.x][currentPosition.y+1] !== CLOSED ? MOVE_HISTORY[currentPosition.x  + "_" + (currentPosition.y+1)] : 999;
+	let minVal = Math.min(left, right, up, down);
+	if(left === minVal){
+		return 'L';
+	}else if(right === minVal){
+		return 'R';
+	}else if(up === minVal){
+		return 'U';
+	}else{
+		return 'D';
+	}
+}
+function getStartCoords(){
+	var coords = {x: 0, y: 0};
+	for(var i = 0; i < mapWidth; i++){
+		for(var j = 0; j < mapHeight; j++){
+			if(MAP[i][j] === START){
+				coords = {x: i, y: j};
+			}
+		}
+	}
+	return coords;
+}
+function validMove(currentPosition, xDiff, yDiff){
+	var validX = currentPosition.x + xDiff >= 0 && currentPosition.x + xDiff < mapWidth;
+	var validY = currentPosition.y + yDiff >= 0 && currentPosition.y + yDiff < mapHeight;
+	return validX && validY;
+}
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+}
+
+
+var test = 1234;
+document.getElementById("textarea").innerHTML = test;
+console.log('end', MAP);
+</script>
+</html>
